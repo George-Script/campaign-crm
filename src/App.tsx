@@ -46,9 +46,8 @@ function RequireAdmin({ children }: GuardProps): JSX.Element {
 
   if (authLoading) return <Spinner />;
 
-  if (!currentUser) return <Navigate to="/login" replace />;
-
-  if (!isAdmin) return <Navigate to="/home" replace />;
+  // If not logged in or not admin, redirect to login
+  if (!currentUser || !isAdmin) return <Navigate to="/login" replace />;
 
   return children;
 }
