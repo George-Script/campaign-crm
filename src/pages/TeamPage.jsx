@@ -64,7 +64,7 @@ export default function TeamPage() {
           <form onSubmit={handleAdd} style={{ display:'flex', flexDirection:'column', gap:16 }}>
             <div>
               <label>Full Name</label>
-              <input placeholder="Kofi Mensah" value={form.name}
+              <input type='text' placeholder="Kofi Mensah" value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required/>
             </div>
             <div>

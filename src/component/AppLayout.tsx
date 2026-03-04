@@ -1,11 +1,8 @@
-// src/components/AppLayout.tsx
-
-import { JSX, useState, type ReactNode } from 'react';
+import { JSX, useState, useEffect } from 'react';
 import {
   Outlet,
   NavLink,
   useNavigate,
-  type NavLinkProps,
   NavLinkRenderProps,
 } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,18 +15,18 @@ import {
   Home,
   LogOut,
   Menu,
-  X,
   Swords,
   Radio,
   Megaphone,
   type LucideIcon,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
+/* ───────────────────────────────────────────── */
+/* Types */
+/* ───────────────────────────────────────────── */
 
 interface NavItem {
   to: string;
@@ -55,10 +52,9 @@ interface AvatarProps {
   size?: number;
 }
 
-
-// ─────────────────────────────────────────────
-// Nav Definitions
-// ─────────────────────────────────────────────
+/* ───────────────────────────────────────────── */
+/* Nav Definitions */
+/* ───────────────────────────────────────────── */
 
 const MEMBER_NAV: NavItem[] = [
   { to: '/home', icon: Home, label: 'My Home' },
@@ -74,10 +70,9 @@ const ADMIN_EXTRA: NavItem[] = [
   { to: '/admin/team', icon: Shield, label: 'Team' },
 ];
 
-
-// ─────────────────────────────────────────────
-// Sidebar Content
-// ─────────────────────────────────────────────
+/* ───────────────────────────────────────────── */
+/* Sidebar Content */
+/* ───────────────────────────────────────────── */
 
 function SidebarContent({ onNavigate }: SidebarContentProps): JSX.Element {
   const { userProfile, isAdmin, logout } = useAuth();
@@ -91,7 +86,6 @@ function SidebarContent({ onNavigate }: SidebarContentProps): JSX.Element {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-
       {/* Logo */}
       <div
         style={{
@@ -141,7 +135,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps): JSX.Element {
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
         {MEMBER_NAV.map(({ to, icon, label }) => (
           <SidebarLink
             key={to}
@@ -186,6 +180,9 @@ function SidebarContent({ onNavigate }: SidebarContentProps): JSX.Element {
           padding: '14px 12px',
           borderTop: '1px solid var(--border)',
           flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -197,9 +194,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps): JSX.Element {
             <div
               style={{
                 fontSize: 11,
-                color: isAdmin
-                  ? 'var(--gold)'
-                  : 'var(--text-muted)',
+                color: isAdmin ? 'var(--gold)' : 'var(--text-muted)',
               }}
             >
               {userProfile?.role ?? 'Member'}
@@ -207,22 +202,17 @@ function SidebarContent({ onNavigate }: SidebarContentProps): JSX.Element {
           </div>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="btn btn-ghost btn-sm"
-          style={{ width: '100%', marginTop: 10 }}
-        >
-          <LogOut size={13} /> Sign Out
+        <button onClick={handleLogout} className="btn btn-ghost btn-sm">
+          <LogOut size={13} />
         </button>
       </div>
     </div>
   );
 }
 
-
-// ─────────────────────────────────────────────
-// Sidebar Link
-// ─────────────────────────────────────────────
+/* ───────────────────────────────────────────── */
+/* Sidebar Link */
+/* ───────────────────────────────────────────── */
 
 function SidebarLink({
   to,
@@ -239,11 +229,11 @@ function SidebarLink({
         display: 'flex',
         alignItems: 'center',
         gap: 9,
-        padding: '9px 10px',
+        padding: '12px 12px',
         borderRadius: 9,
         marginBottom: 3,
         textDecoration: 'none',
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: isActive ? 600 : 400,
         color: isActive
           ? accent
@@ -257,9 +247,7 @@ function SidebarLink({
           : 'transparent',
         border: isActive
           ? `1px solid ${
-              accent
-                ? 'rgba(240,165,0,.2)'
-                : 'var(--border)'
+              accent ? 'rgba(240,165,0,.2)' : 'var(--border)'
             }`
           : '1px solid transparent',
         transition: 'all .15s',
@@ -271,9 +259,9 @@ function SidebarLink({
   );
 }
 
-// ─────────────────────────────────────────────
-// Avatar
-// ─────────────────────────────────────────────
+/* ───────────────────────────────────────────── */
+/* Avatar */
+/* ───────────────────────────────────────────── */
 
 export function Avatar({
   name = '?',
@@ -311,48 +299,187 @@ export function Avatar({
   );
 }
 
-
-// ─────────────────────────────────────────────
-// Main Layout
-// ─────────────────────────────────────────────
+/* ───────────────────────────────────────────── */
+/* App Layout */
+/* ───────────────────────────────────────────── */
 
 export default function AppLayout(): JSX.Element {
-  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const DESKTOP_BREAKPOINT = 900;
+  const SIDEBAR_WIDTH = 240;
+
+  const [isDesktop, setIsDesktop] = useState(
+    window.innerWidth >= DESKTOP_BREAKPOINT
+  );
+
+  const [sidebarOpen, setSidebarOpen] = useState(
+    window.innerWidth >= DESKTOP_BREAKPOINT
+  );
+
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  /* Resize */
+  useEffect(() => {
+    function handleResize() {
+      const desktop = window.innerWidth >= DESKTOP_BREAKPOINT;
+      setIsDesktop(desktop);
+      setSidebarOpen(desktop);
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  /* Theme Init */
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('spets-theme') as
+      | 'dark'
+      | 'light'
+      | null;
+
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      const prefersLight = window.matchMedia(
+        '(prefers-color-scheme: light)'
+      ).matches;
+
+      const initialTheme = prefersLight ? 'light' : 'dark';
+      setTheme(initialTheme);
+      document.documentElement.setAttribute('data-theme', initialTheme);
+    }
+  }, []);
+
+  function toggleTheme() {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('spets-theme', newTheme);
+  }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-
-      {/* Desktop Sidebar */}
-      <aside
-        style={{
-          width: 220,
-          background: 'var(--bg-surface)',
-          borderRight: '1px solid var(--border)',
-          height: '100vh',
-        }}
-        className="sidebar-desktop"
-      >
-        <SidebarContent />
-      </aside>
-
-      {/* Mobile Drawer */}
-      {mobileOpen && (
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        background: 'var(--bg-base)',
+      }}
+    >
+      {/* Mobile Overlay */}
+      {!isDesktop && sidebarOpen && (
         <div
+          onClick={() => setSidebarOpen(false)}
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 99,
-            background: 'rgba(8,12,18,.96)',
+            background: 'rgba(0,0,0,0.55)',
+            zIndex: 40,
           }}
-        >
-          <SidebarContent onNavigate={() => setMobileOpen(false)} />
-        </div>
+        />
       )}
 
-      {/* Main Content */}
-      <main style={{ flex: 1 }}>
-        <Outlet />
-      </main>
+      {/* Sidebar */}
+      <aside
+        style={{
+          width: sidebarOpen || isDesktop ? SIDEBAR_WIDTH : 0,
+          background: 'var(--bg-surface)',
+          borderRight: '1px solid var(--border)',
+          overflow: 'hidden',
+          transition: 'width .3s ease',
+          height: '100vh',
+          position: isDesktop ? 'sticky' : 'fixed',
+          top: 0,
+          zIndex: 50,
+          transform:
+            !isDesktop && !sidebarOpen
+              ? 'translateX(-100%)'
+              : 'translateX(0)',
+        }}
+      >
+        {(sidebarOpen || isDesktop) && (
+          <SidebarContent
+            onNavigate={() => {
+              if (!isDesktop) setSidebarOpen(false);
+            }}
+          />
+        )}
+      </aside>
+
+      {/* Main */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+        }}
+      >
+        {/* Topbar */}
+        <header
+          style={{
+            height: 56,
+            position: 'sticky',
+            top: 0,
+            zIndex: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 16px',
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--bg-surface)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center'}}>
+            {/* Hamburger + Mobile-only text */}
+            {!isDesktop && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
+              >
+                {/* Hamburger */}
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="btn btn-ghost btn-sm"
+                >
+                  <Menu size={18} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile-only text */}
+          <div
+            style={{
+              fontWeight: 600,
+              flex: 1,
+              textAlign: 'center',
+              display: 'block',
+            }}
+            className="topbar-title"
+          >
+            SPETS CRM
+          </div>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="btn btn-ghost btn-sm"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        </header>
+
+        {/* Content */}
+        <main style={{ flex: 1, overflowY: 'auto' }}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

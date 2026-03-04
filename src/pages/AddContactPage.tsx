@@ -1,5 +1,3 @@
-// src/pages/AddContactPage.tsx
-
 import { useState } from 'react';
 import type { FormEvent, JSX, ReactNode } from 'react';
 import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
@@ -277,6 +275,7 @@ export default function AddContactPage(): JSX.Element {
               <button
                 type="button"
                 onClick={() => field('volunteer', !form.volunteer)}
+                className='p-3 rounded-md btn-sm flex flex-row items-center gap-2'
               >
                 {form.volunteer
                   ? <CheckSquare size={16} />
@@ -296,6 +295,7 @@ export default function AddContactPage(): JSX.Element {
                   key={tag}
                   type="button"
                   onClick={() => toggleTag(tag)}
+                  className='btn btn-outline btn-sm'
                 >
                   {tag}
                 </button>
