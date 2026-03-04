@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { JSX, ReactElement } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -13,81 +13,71 @@ import CampaignJourneyPage from './pages/CampaignJourneyPage';
 import BroadcastPage from './pages/BroadcastPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 
+/* ───────────────────────────────────────────── */
+/* Spinner Component */
+/* ───────────────────────────────────────────── */
+function Spinner(): JSX.Element {
+  return (
+    <div className="spinner-container">
+      <div className="spinner"></div>
+    </div>
+  );
+}
 
-// ─────────────────────────────────────────────
-// Guards
-// ─────────────────────────────────────────────
-
+/* ───────────────────────────────────────────── */
+/* Guards */
+/* ───────────────────────────────────────────── */
 interface GuardProps {
   children: ReactElement;
 }
 
-function RequireAuth({ children }: GuardProps): ReactElement {
-  const { currentUser } = useAuth();
+function RequireAuth({ children }: GuardProps): JSX.Element {
+  const { currentUser, authLoading } = useAuth();
 
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
+  if (authLoading) return <Spinner />;
 
-  return children;
-}
-
-function RequireAdmin({ children }: GuardProps): ReactElement {
-  const { currentUser, isAdmin } = useAuth();
-
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/home" replace />;
-  }
+  if (!currentUser) return <Navigate to="/login" replace />;
 
   return children;
 }
 
-function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme');
-  html.setAttribute(
-    'data-theme',
-    current === 'light' ? 'dark' : 'light'
-  );
+function RequireAdmin({ children }: GuardProps): JSX.Element {
+  const { currentUser, isAdmin, authLoading } = useAuth();
+
+  if (authLoading) return <Spinner />;
+
+  if (!currentUser) return <Navigate to="/login" replace />;
+
+  if (!isAdmin) return <Navigate to="/home" replace />;
+
+  return children;
 }
 
-// ─────────────────────────────────────────────
-// Default Redirect After Login
-// ─────────────────────────────────────────────
-
+/* ───────────────────────────────────────────── */
+/* Default Redirect After Login */
+/* ───────────────────────────────────────────── */
 function DefaultRedirect(): ReactElement {
-  const { isAdmin } = useAuth();
+  const { isAdmin, authLoading } = useAuth();
 
-  return (
-    <Navigate
-      to={isAdmin ? '/admin/dashboard' : '/home'}
-      replace
-    />
-  );
+  if (authLoading) return <Spinner />;
+
+  return <Navigate to={isAdmin ? '/admin/dashboard' : '/home'} replace />;
 }
 
-
-// ─────────────────────────────────────────────
-// Route Tree
-// ─────────────────────────────────────────────
-
+/* ───────────────────────────────────────────── */
+/* Route Tree */
+/* ───────────────────────────────────────────── */
 function AppRoutes(): ReactElement {
-  const { currentUser } = useAuth();
+  const { currentUser, authLoading } = useAuth();
+
+  if (authLoading) return <Spinner />;
 
   return (
     <Routes>
       {/* Public */}
       <Route
         path="/login"
-        element={
-          currentUser
-            ? <DefaultRedirect />
-            : <LoginPage />
-        }
+        element={currentUser ? <DefaultRedirect /> : <LoginPage />}
       />
 
       {/* Protected Layout */}
@@ -101,12 +91,12 @@ function AppRoutes(): ReactElement {
       >
         <Route index element={<DefaultRedirect />} />
 
-        {/* Member routes (admins can access too) */}
+        {/* Member routes */}
         <Route path="home" element={<MemberHomePage />} />
         <Route path="contacts" element={<ContactsPage />} />
         <Route path="add-contact" element={<AddContactPage />} />
 
-        {/* Shared campaign routes */}
+        {/* Campaign routes */}
         <Route path="campaign" element={<CampaignJourneyPage />} />
         <Route path="broadcast" element={<BroadcastPage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
@@ -120,7 +110,6 @@ function AppRoutes(): ReactElement {
             </RequireAdmin>
           }
         />
-
         <Route
           path="admin/team"
           element={
@@ -131,17 +120,15 @@ function AppRoutes(): ReactElement {
         />
       </Route>
 
-      {/* Catch-all */}
+      {/* Catch-all for unauthorized or invalid URLs */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
-
-// ─────────────────────────────────────────────
-// App Root
-// ─────────────────────────────────────────────
-
+/* ───────────────────────────────────────────── */
+/* App Root */
+/* ───────────────────────────────────────────── */
 export default function App(): ReactElement {
   return (
     <AuthProvider>
