@@ -315,9 +315,10 @@ export default function AppLayout(): JSX.Element {
     window.innerWidth >= DESKTOP_BREAKPOINT
   );
 
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  // Default theme is light
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
 
-  /* Resize */
+  /* Resize handler */
   useEffect(() => {
     function handleResize() {
       const desktop = window.innerWidth >= DESKTOP_BREAKPOINT;
@@ -329,27 +330,30 @@ export default function AppLayout(): JSX.Element {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  /* Theme Init */
+  /* Theme initialization */
   useEffect(() => {
     const savedTheme = localStorage.getItem('spets-theme') as
       | 'dark'
       | 'light'
       | null;
 
+    let initialTheme: 'dark' | 'light' = 'light';
+
     if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
+      initialTheme = savedTheme;
     } else {
+      // Use OS preference if no saved theme
       const prefersLight = window.matchMedia(
         '(prefers-color-scheme: light)'
       ).matches;
-
-      const initialTheme = prefersLight ? 'light' : 'dark';
-      setTheme(initialTheme);
-      document.documentElement.setAttribute('data-theme', initialTheme);
+      initialTheme = prefersLight ? 'light' : 'dark';
     }
+
+    setTheme(initialTheme);
+    document.documentElement.setAttribute('data-theme', initialTheme);
   }, []);
 
+  /* Toggle theme */
   function toggleTheme() {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
@@ -429,8 +433,8 @@ export default function AppLayout(): JSX.Element {
             background: 'var(--bg-surface)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center'}}>
-            {/* Hamburger + Mobile-only text */}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {/* Hamburger only on mobile */}
             {!isDesktop && (
               <div
                 style={{
@@ -441,7 +445,6 @@ export default function AppLayout(): JSX.Element {
                   gap: 8,
                 }}
               >
-                {/* Hamburger */}
                 <button
                   onClick={() => setSidebarOpen(true)}
                   className="btn btn-ghost btn-sm"
@@ -452,18 +455,19 @@ export default function AppLayout(): JSX.Element {
             )}
           </div>
 
-          {/* Mobile-only text */}
-          <div
-            style={{
-              fontWeight: 600,
-              flex: 1,
-              textAlign: 'center',
-              display: 'block',
-            }}
-            className="topbar-title"
-          >
-            SPETS CRM
-          </div>
+          {/* Mobile-only title */}
+          {!isDesktop && (
+            <div
+              style={{
+                fontWeight: 600,
+                flex: 1,
+                textAlign: 'center',
+              }}
+              className="mobile-topbar-title"
+            >
+              SPETS CRM
+            </div>
+          )}
 
           {/* Theme toggle */}
           <button
@@ -471,7 +475,7 @@ export default function AppLayout(): JSX.Element {
             className="btn btn-ghost btn-sm"
             aria-label="Toggle theme"
           >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
           </button>
         </header>
 
